@@ -1602,7 +1602,10 @@ void get_met(
   met_t *mets;
 
   char filename[LEN];
-
+#ifdef USE_NVTX
+  RANGE_POP;
+  RANGE_PUSH("Init",RED); 
+#endif
   /* Init... */
   if (t == ctl->t_start || !init) {
     init = 1;
@@ -1622,6 +1625,10 @@ void get_met(
   }
 
   /* Read new data for forward trajectories... */
+#ifdef USE_NVTX
+  RANGE_POP;
+  RANGE_PUSH("Rw nw data fw_trj",RED); 
+#endif
   if (t > (*met1)->time && ctl->direction == 1) {
     mets = *met1;
     *met1 = *met0;
@@ -1634,21 +1641,37 @@ void get_met(
 #pragma acc update device(met1up[:1])
 #endif
   }
-
+#ifdef USE_NVTX
+  RANGE_POP;
+  RANGE_PUSH("Rw nw data bw_trj",RED); 
+#endif
   /* Read new data for backward trajectories... */
   if (t < (*met0)->time && ctl->direction == -1) {
+#ifdef USE_NVTX
+  RANGE_PUSH("Read file",BLUE); 
+#endif  
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
     if (!read_met(ctl, filename, *met0))
       ERRMSG("Cannot open file!");
+#ifdef USE_NVTX
+  RANGE_POP;
+  RANGE_PUSH("CP H2D",BLUE); 
+#endif  
 #ifdef _OPENACC
     met_t *met0up = *met0;
 #pragma acc update device(met0up[:1])
 #endif
+#ifdef USE_NVTX
+  RANGE_POP;
+#endif
   }
-
+#ifdef USE_NVTX
+  RANGE_POP;
+  RANGE_PUSH("Chk Grids",RED); 
+#endif
   /* Check that grids are consistent... */
   if ((*met0)->nx != (*met1)->nx
       || (*met0)->ny != (*met1)->ny || (*met0)->np != (*met1)->np)
@@ -1662,6 +1685,9 @@ void get_met(
   for (ip = 0; ip < (*met0)->np; ip++)
     if ((*met0)->p[ip] != (*met1)->p[ip])
       ERRMSG("Meteo grid pressure levels do not match!");
+#ifdef USE_NVTX
+  RANGE_POP;
+#endif
 }
 
 /*****************************************************************************/

@@ -33,10 +33,10 @@
 #include "curand.h"
 #endif
 
-#ifdef USE_NVTX
-#include "nvToolsExt.h"
-#include "nvtxmc.h"
-#endif
+// #ifdef USE_NVTX
+// #include "nvToolsExt.h"
+// #include "nvtxmc.h"
+// #endif
 
 /* ------------------------------------------------------------
    Global variables...

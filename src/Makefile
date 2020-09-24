@@ -25,7 +25,7 @@ LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64
 INCDIR = -I ../lib/build/include
 
 # Compile for GPUs...
-#GPU = 1
+GPU = 1
 
 # Compile for KNL...
 #KNL = 1
@@ -37,7 +37,7 @@ INCDIR = -I ../lib/build/include
 #PROF = 1
 
 # Enable NVTX
-#USE_NVTX = 1
+USE_NVTX = 1
 
 # Static compilation...
 #STATIC = 1
@@ -58,7 +58,7 @@ LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 # Compile for GPUs...
 ifdef GPU
   CC = pgcc
-  CFLAGS = $(INCDIR) -mp -ta=tesla:cc70,lineinfo -mcmodel=medium -Minfo=accel -g
+  CFLAGS = $(INCDIR) -mp -ta=tesla:cc75,lineinfo,managed  -Minfo=accel -g #-mcmodel=medium 
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
 endif
 

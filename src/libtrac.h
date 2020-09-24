@@ -48,6 +48,11 @@
 #include <time.h>
 #include <sys/time.h>
 
+#ifdef USE_NVTX
+#include "nvToolsExt.h"
+#include "nvtxmc.h"
+#endif
+
 /* ------------------------------------------------------------
    Constants...
    ------------------------------------------------------------ */
