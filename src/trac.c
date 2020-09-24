@@ -273,6 +273,9 @@ int main(
   RANGE_POP;
 #endif
     /* Set start time... */
+#ifdef USE_NVTX
+   RANGE_PUSH("Set start time",GRAY); 
+#endif
     if (ctl.direction == 1) {
       ctl.t_start = gsl_stats_min(atm->time, 1, (size_t) atm->np);
       if (ctl.t_stop > 1e99)
@@ -292,26 +295,40 @@ int main(
       ctl.t_start = floor(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
     else
       ctl.t_start = ceil(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
-
+#ifdef USE_NVTX
+  RANGE_POP;
+  RANGE_PUSH("Init rnd",GRAY);
+#endif
     /* Initialize random number generator... */
     module_diffusion_init();
-
+#ifdef USE_NVTX
+  RANGE_POP;
+  RANGE_PUSH("Set timers",GRAY);
+#endif
     /* Set timers... */
     STOP_TIMER(TIMER_INIT);
-
+#ifdef USE_NVTX
+  RANGE_POP;
+  RANGE_PUSH("Init met data",GRAY);
+#endif
     /* Initialize meteorological data... */
     START_TIMER(TIMER_INPUT);
     get_met(&ctl, argv[4], ctl.t_start, &met0, &met1);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
     STOP_TIMER(TIMER_INPUT);
-
+#ifdef USE_NVTX
+  RANGE_POP;
+  RANGE_PUSH("Init isosurf",GRAY);
+#endif
     /* Initialize isosurface... */
     START_TIMER(TIMER_ISOSURF);
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
     STOP_TIMER(TIMER_ISOSURF);
-
+#ifdef USE_NVTX
+  RANGE_POP;
+#endif
     /* ------------------------------------------------------------
        Loop over timesteps...
        ------------------------------------------------------------ */
@@ -319,7 +336,9 @@ int main(
     /* Loop over timesteps... */
     for (t = ctl.t_start; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
 	 t += ctl.direction * ctl.dt_mod) {
-
+#ifdef USE_NVTX
+  RANGE_PUSH("Adj len final time",MAGENTA);
+#endif
       /* Adjust length of final time step... */
       if (ctl.direction * (t - ctl.t_stop) > 0)
 	t = ctl.t_stop;
@@ -327,7 +346,8 @@ int main(
       /* Set time steps for air parcels... */
 #ifdef _OPENACC
 #ifdef USE_NVTX
-   RANGE_PUSH("Set time steps",GRAY); 
+   RANGE_POP;
+   RANGE_PUSH("Set time steps",MAGENTA); 
 #endif
 #pragma acc parallel loop independent gang vector present(ctl,atm,atm->time,dt)
 #endif
@@ -346,7 +366,7 @@ int main(
   RANGE_POP;
 #endif
 #ifdef USE_NVTX
-   RANGE_PUSH("Get met data",GRAY); 
+   RANGE_PUSH("Get met data",MAGENTA); 
 #endif
       /* Get meteorological data... */
       START_TIMER(TIMER_INPUT);
@@ -355,7 +375,7 @@ int main(
       STOP_TIMER(TIMER_INPUT);
 #ifdef USE_NVTX
    RANGE_POP;
-   RANGE_PUSH("Check init pos",GRAY); 
+   RANGE_PUSH("Check init pos",MAGENTA); 
 #endif
       /* Check initial position... */
       START_TIMER(TIMER_POSITION);
@@ -363,7 +383,7 @@ int main(
       STOP_TIMER(TIMER_POSITION);
 #ifdef USE_NVTX
    RANGE_POP;   
-   RANGE_PUSH("Advection",GRAY); 
+   RANGE_PUSH("Advection",MAGENTA); 
 #endif
       /* Advection... */
       START_TIMER(TIMER_ADVECT);
@@ -371,7 +391,7 @@ int main(
       STOP_TIMER(TIMER_ADVECT);
 #ifdef USE_NVTX
    RANGE_POP;
-   RANGE_PUSH("Turbulent diffusion",GRAY); 
+   RANGE_PUSH("Turbulent diffusion",MAGENTA); 
 #endif
       /* Turbulent diffusion... */
       START_TIMER(TIMER_DIFFTURB);
@@ -383,7 +403,7 @@ int main(
       STOP_TIMER(TIMER_DIFFTURB);
 #ifdef USE_NVTX
    RANGE_POP;
-   RANGE_PUSH("Mesoscale diffusion",GRAY); 
+   RANGE_PUSH("Mesoscale diffusion",MAGENTA); 
 #endif
       /* Mesoscale diffusion... */
       START_TIMER(TIMER_DIFFMESO);
@@ -394,7 +414,7 @@ int main(
       STOP_TIMER(TIMER_DIFFMESO);
 #ifdef USE_NVTX
    RANGE_POP;  
-   RANGE_PUSH("Sedimentation",GRAY); 
+   RANGE_PUSH("Sedimentation",MAGENTA); 
 #endif
       /* Sedimentation... */
       START_TIMER(TIMER_SEDI);
@@ -403,7 +423,7 @@ int main(
       STOP_TIMER(TIMER_SEDI);
 #ifdef USE_NVTX
    RANGE_POP;
-   RANGE_PUSH("Isosurface", GRAY); 
+   RANGE_PUSH("Isosurface", MAGENTA); 
 #endif
       /* Isosurface... */
       START_TIMER(TIMER_ISOSURF);
@@ -412,7 +432,7 @@ int main(
       STOP_TIMER(TIMER_ISOSURF);
 #ifdef USE_NVTX
    RANGE_POP; 
-   RANGE_PUSH("Check final pos", GRAY); 
+   RANGE_PUSH("Check final pos", MAGENTA); 
 #endif
       /* Check final position... */
       START_TIMER(TIMER_POSITION);
@@ -420,7 +440,7 @@ int main(
       STOP_TIMER(TIMER_POSITION);
 #ifdef USE_NVTX
    RANGE_POP;
-   RANGE_PUSH("Interpolate met data", GRAY); 
+   RANGE_PUSH("Interpolate met data", MAGENTA); 
 #endif
       /* Interpolate meteorological data... */
       START_TIMER(TIMER_METEO);
@@ -430,7 +450,7 @@ int main(
       STOP_TIMER(TIMER_METEO);
 #ifdef USE_NVTX
    RANGE_POP;
-   RANGE_PUSH("Decay of particle mass", GRAY); 
+   RANGE_PUSH("Decay of particle mass", MAGENTA); 
 #endif
       /* Decay of particle mass... */
       START_TIMER(TIMER_DECAY);
@@ -448,7 +468,7 @@ int main(
       STOP_TIMER(TIMER_OHCHEM);
 #ifdef USE_NVTX
    RANGE_POP;
-   RANGE_PUSH("Wet deposition", GRAY); 
+   RANGE_PUSH("Wet deposition", MAGENTA); 
 #endif
       /* Wet deposition... */
       START_TIMER(TIMER_WETDEPO);
@@ -458,7 +478,7 @@ int main(
       STOP_TIMER(TIMER_WETDEPO);
 #ifdef USE_NVTX
    RANGE_POP;
-   RANGE_PUSH("Write output", GRAY); 
+   RANGE_PUSH("Write output", MAGENTA); 
 #endif
       /* Write output... */
       START_TIMER(TIMER_OUTPUT);
@@ -472,7 +492,9 @@ int main(
     /* ------------------------------------------------------------
        Finalize model run...
        ------------------------------------------------------------ */
-
+#ifdef USE_NVTX
+   RANGE_PUSH("Finalize", GRAY); 
+#endif
     /* Report problem size... */
     printf("SIZE_NP = %d\n", atm->np);
     printf("SIZE_TASKS = %d\n", size);
@@ -515,9 +537,7 @@ int main(
     PRINT_TIMER(TIMER_TOTAL);
 
     /* Free... */
-#ifdef USE_NVTX
-   RANGE_PUSH("Deallocations", GRAY); 
-#endif
+
     free(atm);
     free(cache);
     free(met0);
